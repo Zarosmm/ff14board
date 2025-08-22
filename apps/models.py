@@ -21,7 +21,7 @@ class User(AbstractUser):
 class Server(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)  # 全局唯一ID
     name = models.CharField(max_length=64, unique=True)
-    parent = models.ForeignKey("self", on_delete=models.CASCADE, related_name="children")
+    parent = models.ForeignKey("self", null=True, on_delete=models.CASCADE, related_name="children")
 
     def __str__(self):
         if self.parent:
@@ -42,27 +42,35 @@ class Character(models.Model):
 class Team(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)  # 全局唯一ID
     name = models.CharField(max_length=64, unique=True)
-    members = models.ManyToManyField(Character, through='TeamCharacter', related_name="teams")
+    leader = models.ForeignKey(Character, on_delete=models.CASCADE, related_name="teamsCreated")
+    members = models.ManyToManyField(Character, through='TeamCharacter', related_name="teamsJoined")
+
+    def __str__(self):
+        return f"{self.leader.server}-{self.name}"
 
 
 class TeamTimeSlot(models.Model):
+    WEEKDAYS = [
+        (0, "Mon"),
+        (1, "Tue"),
+        (2, "Wed"),
+        (3, "Thu"),
+        (4, "Fri"),
+        (5, "Sat"),
+        (6, "Sun"),
+    ]
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="time_slots")
-    weekday = models.IntegerField(choices=[(0,"Mon"),(1,"Tue"),..., (6,"Sun")])
+    weekday = models.IntegerField(choices=WEEKDAYS)
     start_time = models.TimeField()
     end_time = models.TimeField()
 
 
 class TeamCharacter(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)  # 全局唯一ID
-    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="characterInfos")
     character = models.ForeignKey(Character, on_delete=models.CASCADE)
     job = models.CharField(max_length=64, null=False)
     gear = models.JSONField(default=dict)
 
-
-class Recruit(models.Model):
-    pass
-
-
-
-
+    def __str__(self):
+        return f"{self.team}-{self.character.name}-{self.job}"

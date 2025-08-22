@@ -15,8 +15,46 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include, re_path
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework_simplejwt.views import TokenObtainPairView
+from apps.api import views as apiViews
+from apps.admin import views as adminViews
+from rest_framework import routers, permissions
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="FF14 招募板 API",
+      default_version='v1',
+      description="FF14 招募板系统 API 文档",
+      terms_of_service="https://www.example.com/terms/",
+      contact=openapi.Contact(email="contact@example.com"),
+      license=openapi.License(name="MIT License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
+
+
+apiRouter = routers.DefaultRouter()
+
+apiRouter.register('server', apiViews.ServerViewSet, basename='server')
+apiRouter.register('character', apiViews.CharacterViewSet, basename='character')
+apiRouter.register('team', apiViews.TeamViewSet, basename='team')
+
+adminRouter = routers.DefaultRouter()
+
+adminRouter.register('server', adminViews.ServerViewSet, basename='server')
+adminRouter.register('character', adminViews.CharacterViewSet, basename='character')
+#adminRouter.register('team', adminViews.TeamViewSet, basename='team')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('login', TokenObtainPairView.as_view()),
+    path('register', apiViews.UserRegisterView.as_view()),
+    path('api/', include(apiRouter.urls)),
+    path('admin/', include(adminRouter.urls)),
+    re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

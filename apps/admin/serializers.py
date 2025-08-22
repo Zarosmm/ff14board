@@ -1,8 +1,9 @@
 from rest_framework import serializers
+from utils.serializers import UniqueRefNameModelSerializer
 from apps.models import Server, Character, User
 
 
-class ServerSerializer(serializers.ModelSerializer):
+class ServerSerializer(UniqueRefNameModelSerializer):
     children = serializers.StringRelatedField(many=True, read_only=True)  # 展示子区名字
 
     class Meta:
@@ -10,7 +11,8 @@ class ServerSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'parent', 'children']
 
 
-class CharacterSerializer(serializers.ModelSerializer):
+
+class CharacterSerializer(UniqueRefNameModelSerializer):
     server = ServerSerializer(read_only=True)
 
     class Meta:
@@ -18,16 +20,8 @@ class CharacterSerializer(serializers.ModelSerializer):
         fields = ['id', 'server', 'name', 'jobs']
 
 
-class CharacterGetSerializer(serializers.ModelSerializer):
-    server = ServerSerializer(read_only=True)
-
-    class Meta:
-        model = Character
-        fields = ['id', 'server', 'name', 'jobs']
-
-
-class UserSerializer:
-    characters = CharacterGetSerializer(many=True, read_only=True)
+class UserSerializer(UniqueRefNameModelSerializer):
+    characters = CharacterSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
