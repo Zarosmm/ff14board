@@ -29,7 +29,6 @@ class RulesPermission(BasePermission):
             return False
 
         model_cls = obj.__class__
-        perm_name = f"{model_cls._meta.app_label}.{action}_{model_cls._meta.model_name}"
+        perm_name = f"{model_cls._meta.model_name}.{action}_{model_cls._meta.model_name}"
 
-        # 调用 django-rules 检查权限
-        return request.user.has_perm(perm_name, obj)
+        return rules.has_perm(perm_name, request.user, obj)

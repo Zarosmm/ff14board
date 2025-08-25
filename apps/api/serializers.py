@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from utils.serializers import UniqueRefNameModelSerializer
-from apps.models import Server, Character, User, Team, TeamCharacter, TeamTimeSlot
+from apps.models import Server, Character, User, Team, TeamCharacter
 
 
 class UserRegisterSerializer(UniqueRefNameModelSerializer):
@@ -8,7 +8,7 @@ class UserRegisterSerializer(UniqueRefNameModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "qq_openid", "wechat_openid", "avatar_url", "oauth_provider"]
+        fields = ["id", "username", "email", "password"]
         extra_kwargs = {
             "email": {"required": True},
             "username": {"required": True},
@@ -19,11 +19,7 @@ class UserRegisterSerializer(UniqueRefNameModelSerializer):
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
-            password=validated_data["password"],
-            qq_openid=validated_data.get("qq_openid"),
-            wechat_openid=validated_data.get("wechat_openid"),
-            avatar_url=validated_data.get("avatar_url"),
-            oauth_provider=validated_data.get("oauth_provider"),
+            password=validated_data["password"]
         )
         return user
 
@@ -41,6 +37,22 @@ class ServerGetSerializer(UniqueRefNameModelSerializer):
 
 
 class CharacterSerializer(UniqueRefNameModelSerializer):
+
+    class Meta:
+        model = Character
+        fields = ['id', 'server', 'name', 'jobs']
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        if user:
+            validated_data['user'] = user
+        instance = super().create(validated_data)
+        return instance
+
+
+
+class CharacterInfoSerializer(UniqueRefNameModelSerializer):
     server = ServerGetSerializer(read_only=True)
 
     class Meta:
@@ -48,35 +60,17 @@ class CharacterSerializer(UniqueRefNameModelSerializer):
         fields = ['id', 'server', 'name', 'jobs']
 
 
-class TeamSerializer(UniqueRefNameModelSerializer):
-
-    class Meta:
-        model = Team
-        fields = ['id', 'name', 'leader', 'members']
-
-
 class TeamCharacterSerializer(UniqueRefNameModelSerializer):
-    character_name = serializers.CharField(source='character.name', read_only=True)
+    character = serializers.CharField(source='character.name', read_only=True)
 
     class Meta:
         model = TeamCharacter
-        fields = ['id', 'character', 'character_name', 'job', 'gear']
-
-
-class TeamTimeSlotSerializer(UniqueRefNameModelSerializer):
-    weekday_display = serializers.CharField(source='get_weekday_display', read_only=True)
-
-    class Meta:
-        model = TeamTimeSlot
-        fields = ['id', 'weekday', 'weekday_display', 'start_time', 'end_time']
+        fields = ['character', 'job']
 
 
 class TeamInfoSerializer(UniqueRefNameModelSerializer):
-    leader = serializers.CharField(source='leader.name', read_only=True)
     members = TeamCharacterSerializer(many=True, read_only=True, source='teamJoined')
-    time_slots = TeamTimeSlotSerializer(many=True, read_only=True)
 
     class Meta:
         model = Team
         fields = ['id', 'name', 'leader', 'members', 'time_slots']
-

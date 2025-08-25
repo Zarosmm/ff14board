@@ -2,7 +2,8 @@ from rest_framework import generics
 
 from utils import viewsets, paginatior
 from apps.models import User, Server, Character
-from apps.admin.serializers import UserSerializer, ServerSerializer, CharacterSerializer
+from apps.admin.serializers import UserSerializer, ServerSerializer, CharacterSerializer, TeamSerializer
+from utils.permissions import RulesPermission
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -20,4 +21,10 @@ class ServerViewSet(viewsets.ModelViewSet):
 class CharacterViewSet(viewsets.ModelViewSet):
     queryset = Character.objects.all()
     serializer_class = CharacterSerializer
+    pagination_class = paginatior.PagePagination
+
+
+class TeamViewSet(viewsets.ModelViewSet):
+    queryset = Character.objects.all()
+    serializer_class = TeamSerializer
     pagination_class = paginatior.PagePagination

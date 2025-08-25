@@ -4,19 +4,34 @@ from rest_framework.response import Response
 
 from utils import viewsets, paginatior
 from apps.models import User, Server, Character, Team
-from apps.api.serializers import ServerGetSerializer, CharacterSerializer, UserRegisterSerializer, TeamSerializer
+from apps.api.serializers import ServerGetSerializer, CharacterSerializer, UserRegisterSerializer, TeamInfoSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+
+class UserLoginView(TokenObtainPairView):
+    permission_classes = [permissions.AllowAny, ]
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        data = response.data
+        return Response({
+            "access_token": data["access"],
+            "token_type": "Bearer",
+            "expires_in": 3600  # 根据你的配置调整
+        })
 
 
 class UserRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
+    permission_classes = [permissions.AllowAny, ]
 
 
 class ServerViewSet(viewsets.ModelViewSet):
     queryset = Server.objects.all()
     serializer_class = ServerGetSerializer
     pagination_class = paginatior.PagePagination
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
 
     @action(methods=['get'], detail=False)
     def get_server_tree(self, request):
@@ -34,5 +49,5 @@ class CharacterViewSet(viewsets.ModelViewSet):
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
-    serializer_class = TeamSerializer
+    serializer_class = TeamInfoSerializer
     pagination_class = paginatior.PagePagination

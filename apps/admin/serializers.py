@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from utils.serializers import UniqueRefNameModelSerializer
-from apps.models import Server, Character, User
+from apps.models import Server, Character, User, Team
 
 
 class ServerSerializer(UniqueRefNameModelSerializer):
@@ -27,3 +27,9 @@ class UserSerializer(UniqueRefNameModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'nickname', 'characters', 'is_active', 'date_joined']
         read_only_fields = ['id', 'date_joined']
+
+
+class TeamSerializer(UniqueRefNameModelSerializer):
+    class Meta:
+        model = Team
+        fields = ['id', 'name', 'leader', 'members']

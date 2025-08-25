@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import datetime
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -89,9 +90,10 @@ DATABASES = {
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'utils.permissions.RulesPermission',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
@@ -113,9 +115,31 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "apps.User"
 
+SWAGGER_SETTINGS = {
+    'LOGIN_URL': '/login',
+    'SECURITY_DEFINITIONS': {
+        'OAUTH2': {
+            'type': 'oauth2',
+            'flow': 'password',
+            'tokenUrl': '/login',
+        }
+    },
+    'USE_SESSION_AUTH': False
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=15),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(days=30),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': 'your-secret-key',
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
+
+STATIC_ROOT = os.path.join(BASE_DIR,'/static')
 
 LANGUAGE_CODE = 'zh-hans'
 

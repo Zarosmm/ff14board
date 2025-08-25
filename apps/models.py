@@ -31,6 +31,7 @@ class Server(models.Model):
 
 class Character(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)  # 全局唯一ID
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="characters")
     server = models.ForeignKey(Server, on_delete=models.CASCADE, related_name="players")
     name = models.CharField(max_length=64, unique=True)
     jobs = models.JSONField(default=list)
@@ -44,25 +45,10 @@ class Team(models.Model):
     name = models.CharField(max_length=64, unique=True)
     leader = models.ForeignKey(Character, on_delete=models.CASCADE, related_name="teamsCreated")
     members = models.ManyToManyField(Character, through='TeamCharacter', related_name="teamsJoined")
+    time_slots = models.JSONField(default=list)
 
     def __str__(self):
         return f"{self.leader.server}-{self.name}"
-
-
-class TeamTimeSlot(models.Model):
-    WEEKDAYS = [
-        (0, "Mon"),
-        (1, "Tue"),
-        (2, "Wed"),
-        (3, "Thu"),
-        (4, "Fri"),
-        (5, "Sat"),
-        (6, "Sun"),
-    ]
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="time_slots")
-    weekday = models.IntegerField(choices=WEEKDAYS)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
 
 
 class TeamCharacter(models.Model):
