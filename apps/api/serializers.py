@@ -1,76 +1,89 @@
 from rest_framework import serializers
-from utils.serializers import UniqueRefNameModelSerializer
-from apps.models import Server, Character, User, Team, TeamCharacter
+from apps.models import User, Server, Character, Team, TeamCharacter
+from utils.serializers import ActionFieldsSerializer
 
 
-class UserRegisterSerializer(UniqueRefNameModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+class UserSerializer(ActionFieldsSerializer):
+
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password"]
-        extra_kwargs = {
-            "email": {"required": True},
-            "username": {"required": True},
-        }
+        fields = ["id", "email", "username", "password", "qq_openid", "wechat_openid", "avatar_url", "oauth_provider"]
+
+    action_fields = {
+        "list": ["id", "email", "username", "is_superuser"],
+        "retrieve": ["id", "email", "username", "is_superuser"],
+        "create": ["id", "email", "username", "password", "qq_openid", "wechat_openid", "avatar_url", "oauth_provider"],
+    }
 
     def create(self, validated_data):
-        # 用 create_user 确保密码哈希存储
-        user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data["email"],
-            password=validated_data["password"]
-        )
-        return user
-
-
-class ServerGetSerializer(UniqueRefNameModelSerializer):
-    # 递归显示子服务器
-    children = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Server
-        fields = ['id', 'name', 'parent', 'children']
-
-    def get_children(self, obj):
-        return ServerGetSerializer(obj.children.all(), many=True).data
-
-
-class CharacterSerializer(UniqueRefNameModelSerializer):
-
-    class Meta:
-        model = Character
-        fields = ['id', 'server', 'name', 'jobs']
-
-    def create(self, validated_data):
-        request = self.context.get('request')
-        user = request.user
-        if user:
-            validated_data['user'] = user
         instance = super().create(validated_data)
+        print(self.initial_data)
+        print(validated_data)
         return instance
 
 
+class ServerSerializer(ActionFieldsSerializer):
+    class Meta:
+        model = Server
+        fields = ["id", "name", "parent"]
 
-class CharacterInfoSerializer(UniqueRefNameModelSerializer):
-    server = ServerGetSerializer(read_only=True)
+    action_fields = {
+        "list": ["id", "name"],
+        "retrieve": "__all__",
+        "create": ["id", "name", "parent"],
+    }
 
+
+class CharacterSerializer(ActionFieldsSerializer):
     class Meta:
         model = Character
-        fields = ['id', 'server', 'name', 'jobs']
+        fields = ["id", "user", "server", "name", "jobs"]
+
+    action_fields = {
+        "list": ["id", "name", "server"],
+        "retrieve": "__all__",
+        "create": ["id", "user", "server", "name", "jobs"],
+    }
+
+    # 处理 ForeignKey 和 M2M
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    server = serializers.PrimaryKeyRelatedField(queryset=Server.objects.all())
 
 
-class TeamCharacterSerializer(UniqueRefNameModelSerializer):
-    character = serializers.CharField(source='character.name', read_only=True)
-
+class TeamCharacterSerializer(ActionFieldsSerializer):
     class Meta:
         model = TeamCharacter
-        fields = ['character', 'job']
+        fields = ["id", "team", "character", "job", "gear"]
+
+    action_fields = {
+        "list": ["id", "team", "character"],
+        "retrieve": "__all__",
+        "create": ["id", "team", "character", "job", "gear"],
+    }
+
+    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all())
+    character = serializers.PrimaryKeyRelatedField(queryset=Character.objects.all())
 
 
-class TeamInfoSerializer(UniqueRefNameModelSerializer):
-    members = TeamCharacterSerializer(many=True, read_only=True, source='teamJoined')
-
+class TeamSerializer(ActionFieldsSerializer):
     class Meta:
         model = Team
-        fields = ['id', 'name', 'leader', 'members', 'time_slots']
+        fields = ["id", "name", "leader", "members", "time_slots"]
+
+    action_fields = {
+        "list": ["id", "name", "leader"],
+        "retrieve": "__all__",
+        "create": ["id", "name", "leader", "members", "time_slots"],
+    }
+
+    # 处理 leader (ForeignKey) 和 members (ManyToMany)
+    leader= serializers.PrimaryKeyRelatedField(queryset=Character.objects.all())
+    members = serializers.PrimaryKeyRelatedField(queryset=Character.objects.all(), many=True)
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        print(self.initial_data)
+        print(validated_data)
+        return instance

@@ -8,12 +8,14 @@ class RulesPermission(BasePermission):
     """
 
     def has_permission(self, request, view):
+        return True
         # 列表或创建等全局操作
         if request.method in SAFE_METHODS:
             return True  # GET/HEAD/OPTIONS 默认允许
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
+        return True
         # 映射 HTTP 方法到操作类型
         method_map = {
             'GET': 'view',

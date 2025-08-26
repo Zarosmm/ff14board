@@ -6,7 +6,7 @@ from django.db import models
 
 class User(AbstractUser):
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4(), editable=False, unique=True)  # 全局唯一ID
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)  # 全局唯一ID
     email = models.EmailField(unique=True)  # 确保邮箱唯一
     qq_openid = models.CharField(max_length=64, blank=True, null=True, unique=True)
     wechat_openid = models.CharField(max_length=64, blank=True, null=True, unique=True)

@@ -49,6 +49,7 @@ apiRouter.register('team', apiViews.TeamViewSet, basename='team')
 adminRouter = routers.SimpleRouter()
 
 adminRouter.register('server', adminViews.ServerViewSet, basename='server')
+adminRouter.register('user', adminViews.UserViewSet, basename='user')
 adminRouter.register('character', adminViews.CharacterViewSet, basename='character')
 adminRouter.register('team', adminViews.TeamViewSet, basename='team')
 
